@@ -1,20 +1,19 @@
-import requests
-import os
-
-
-# Ongoing build effort - all functions are translated from API calls documented
-# within the following pages:
-#   https://buildkite.com/docs/apis/rest-api
-
-# Handling different file/content types
+""" TODO: Module docstring."""
 import json
+import logging
+from typing import Callable
+import requests
+
+
+class BuildkiteError(Exception):
+    """TODO: Class docstring."""
 
 
 class BuildkiteSession(requests.Session):
-    def __init__(self, *args, **kwargs):
-        super(BuildkiteSession, self).__init__(*args, **kwargs)
+    """TODO: Class docstring."""
 
     def init_basic_auth(self, api_access_token: str):
+        """TODO: Function docstring."""
         self.headers.update(
             {
                 "Authorization": f"Bearer {api_access_token}",
@@ -23,6 +22,7 @@ class BuildkiteSession(requests.Session):
 
 
 class BuildkiteClient:
+    """TODO: Class docstring."""
     def __init__(self, api_access_token: str):
         # Initialize the session.
         self.__session = BuildkiteSession()
@@ -38,7 +38,7 @@ class BuildkiteClient:
         params: dict = None,
         data: dict = None,
         headers: dict = None,
-    ):
+    ) -> requests.Response:
         """Basic function to remove this snippet of code out of every other
         function.
 
@@ -95,13 +95,12 @@ class BuildkiteClient:
         resp = self.__session.send(prep)
         return resp
 
-    """ Access Token API
-    https://buildkite.com/docs/apis/rest-api/access-token
+    # Access Token API
+    # https://buildkite.com/docs/apis/rest-api/access-token
 
-    The Access Token API allows you to inspect and revoke an API Access Token.
-    This can be useful if you find a token, can't identify its owner, and you
-    want to revoke it.
-    """
+    # The Access Token API allows you to inspect and revoke an API Access Token.
+    # This can be useful if you find a token, can't identify its owner, and you
+    # want to revoke it.
 
     def get_current_token(self) -> requests.Response:
         """Get the current token
@@ -115,7 +114,7 @@ class BuildkiteClient:
         """
         return self.__request(
             method="GET",
-            path=f"access-token",
+            path="access-token",
         )
 
     def revoke_current_token(self) -> requests.Response:
@@ -130,12 +129,11 @@ class BuildkiteClient:
         """
         return self.__request(
             method="DELETE",
-            path=f"access-token",
+            path="access-token",
         )
 
-    """ Organizations API
-    https://buildkite.com/docs/apis/rest-api/organizations
-    """
+    # Organizations API
+    # https://buildkite.com/docs/apis/rest-api/organizations
 
     def list_organizations(self) -> requests.Response:
         """List organizations
@@ -148,7 +146,7 @@ class BuildkiteClient:
         """
         return self.__request(
             method="GET",
-            path=f"organizations",
+            path="organizations",
         )
 
     def get_organization(self, org_slug: str) -> requests.Response:
@@ -170,9 +168,8 @@ class BuildkiteClient:
             path=f"organizations/{org_slug}",
         )
 
-    """ Pipelines API
-    https://buildkite.com/docs/apis/rest-api/pipelines
-    """
+    # Pipelines API
+    # https://buildkite.com/docs/apis/rest-api/pipelines
 
     def list_pipelines(self, org_slug: str) -> requests.Response:
         """List pipelines
@@ -368,6 +365,7 @@ class BuildkiteClient:
         return self.__request(
             method="PATCH",
             path=f"organizations/{org_slug}/pipelines/{pipeline_slug}",
+            data=json.dumps(pipeline_definition),
         )
 
     def archive_pipeline(self, org_slug: str, pipeline_slug: str) -> requests.Response:
@@ -465,18 +463,17 @@ class BuildkiteClient:
             path=f"organizations/{org_slug}/pipelines/{pipeline_slug}/webhook",
         )
 
-    """ Builds API
-    https://buildkite.com/docs/apis/rest-api/builds
+    # Builds API
+    # https://buildkite.com/docs/apis/rest-api/builds
 
-    Build number vs build ID
+    # Build number vs build ID
 
-    All builds have both an ID which is unique within the whole of Buildkite
-    (build ID), and a sequential number which is unique to the pipeline (build
-    number).
+    # All builds have both an ID which is unique within the whole of Buildkite
+    # (build ID), and a sequential number which is unique to the pipeline (build
+    # number).
 
-    For example build number 27 of the Test pipeline might have a build ID of
-    f62a1b4d-10f9-4790-bc1c-e2c3a0c80983.
-    """
+    # For example build number 27 of the Test pipeline might have a build ID of
+    # f62a1b4d-10f9-4790-bc1c-e2c3a0c80983.
 
     def list_all_builds(self, params: dict = None) -> requests.Response:
         """List all builds
@@ -517,7 +514,7 @@ class BuildkiteClient:
         """
         return self.__request(
             method="GET",
-            path=f"builds",
+            path="builds",
             params=params,
         )
 
@@ -620,7 +617,7 @@ class BuildkiteClient:
             params=params,
         )
 
-    def get__build(
+    def get_build(
         self, org_slug: str, pipeline_slug: str, build_number: str, params: dict = None
     ) -> requests.Response:
         """Get a build
@@ -655,7 +652,7 @@ class BuildkiteClient:
             params=params,
         )
 
-    def create__build(
+    def create_build(
         self, org_slug: str, pipeline_slug: str, build_number: str, params: dict = None
     ) -> requests.Response:
         """Create a build
@@ -770,9 +767,8 @@ class BuildkiteClient:
             path=f"organizations/{org_slug}/pipelines/{pipeline_slug}/builds/{build_number}/rebuild",
         )
 
-    """ Jobs API
-    https://buildkite.com/docs/apis/rest-api/jobs
-    """
+    # Jobs API
+    # https://buildkite.com/docs/apis/rest-api/jobs
 
     def retry_job(
         self, org_slug: str, pipeline_slug: str, build_number: str, job_id: str
@@ -939,9 +935,8 @@ class BuildkiteClient:
             path=f"organizations/{org_slug}/pipelines/{pipeline_slug}/builds/{build_number}/jobs/{job_id}/env",
         )
 
-    """ Agents API
-    https://buildkite.com/docs/apis/rest-api/agents
-    """
+    # Agents API
+    # https://buildkite.com/docs/apis/rest-api/agents
 
     def list_agents(self, org_slug: str, params: dict = None) -> requests.Response:
         """List agents
@@ -1013,28 +1008,27 @@ class BuildkiteClient:
             params=params,
         )
 
-    """ Artifacts API
-    https://buildkite.com/docs/apis/rest-api/artifacts
+    # Artifacts API
+    # https://buildkite.com/docs/apis/rest-api/artifacts
 
-    Artifact data model
+    # Artifact data model
 
-    An artifact is a file uploaded by your agent during the execution of a
-    build's job. The contents of the artifact can be retrieved using the
-    download_url and the artifact download API.
-        id:      	    ID of the artifact
-        job_id: 	    ID of the job
-        url:     	    Canonical API URL of the artifact
-        download_url: 	Artifact Download API URL for the artifact
-        state:          State of the artifact (new, error, finished, deleted,
-                        expired)
-        path:           Path of the artifact
-        dirname:     	Path of the artifact excluding the filename
-        filename:    	Filename of the artifact
-        mime_type:   	Mime type of the artifact
-        file_size:   	File size of the artifact in bytes
-        sha1sum:     	SHA-1 hash of artifact contents as calculated by the 
-                        agent
-    """
+    # An artifact is a file uploaded by your agent during the execution of a
+    # build's job. The contents of the artifact can be retrieved using the
+    # download_url and the artifact download API.
+    #     id:      	        ID of the artifact
+    #     job_id: 	        ID of the job
+    #     url:     	        Canonical API URL of the artifact
+    #     download_url: 	Artifact Download API URL for the artifact
+    #     state:            State of the artifact (new, error, finished,
+    #                           deleted, expired)
+    #     path:             Path of the artifact
+    #     dirname:     	    Path of the artifact excluding the filename
+    #     filename:    	    Filename of the artifact
+    #     mime_type:   	    Mime type of the artifact
+    #     file_size:   	    File size of the artifact in bytes
+    #     sha1sum:     	    SHA-1 hash of artifact contents as calculated by the
+    #                           agent
 
     def list_build_artifacts(
         self, org_slug: str, pipeline_slug: str, build_number: str
@@ -1221,23 +1215,22 @@ class BuildkiteClient:
             path=f"organizations/{org_slug}/pipelines/{pipeline_slug}/builds/{build_number}/jobs/{job_id}/artifacts/{artifact_id}",
         )
 
-    """ Annotations API
-    https://buildkite.com/docs/apis/rest-api/annotations
+    # Annotations API
+    # https://buildkite.com/docs/apis/rest-api/annotations
 
-    Annotation data model
+    # Annotation data model
 
-    An annotation is a snippet of Markdown uploaded by your agent during the
-    execution of a build's job. Annotations are created using the
-    buildkite-agent annotate command from within a job.
-        id:         ID of the annotation
-        context:    The "context" specified when annotating the build. Only one
-                    annotation per build may have any given context value.
-        style:      The style of the annotation. Can be `success`, `info`,
-                    `warning` or `error`.
-        body_html:  Rendered HTML of the annotation's body
-        created_at:	When the annotation was first created
-        updated_at:	When the annotation was last added to or replaced
-    """
+    # An annotation is a snippet of Markdown uploaded by your agent during the
+    # execution of a build's job. Annotations are created using the
+    # buildkite-agent annotate command from within a job.
+    #     id:         ID of the annotation
+    #     context:    The "context" specified when annotating the build. Only one
+    #                 annotation per build may have any given context value.
+    #     style:      The style of the annotation. Can be `success`, `info`,
+    #                 `warning` or `error`.
+    #     body_html:  Rendered HTML of the annotation's body
+    #     created_at:	When the annotation was first created
+    #     updated_at:	When the annotation was last added to or replaced
 
     def list_build_annotations(
         self, org_slug: str, pipeline_slug: str, build_number: str
@@ -1266,15 +1259,15 @@ class BuildkiteClient:
             path=f"organizations/{org_slug}/pipelines/{pipeline_slug}/builds/{build_number}/annotations",
         )
 
-    """ Emojis API
+    # Emojis API
+    # https://buildkite.com/docs/apis/rest-api/emojis
 
-    Buildkite supports emojis (using the :emoji: syntax) in build step names and
-    build log header groups. The Emoji API allows you to fetch the list of
-    emojis for an organization so you can display emojis correctly in your own
-    integrations.
+    # Buildkite supports emojis (using the :emoji: syntax) in build step names and
+    # build log header groups. The Emoji API allows you to fetch the list of
+    # emojis for an organization so you can display emojis correctly in your own
+    # integrations.
 
-    Emojis can be found in text using the pattern /:([\w+-]+):/
-    """
+    # Emojis can be found in text using the pattern /:([\w+-]+):/
 
     def list_emojis(self, org_slug: str) -> requests.Response:
         """Returns a list of all the emojis for a given organization, including
@@ -1285,26 +1278,26 @@ class BuildkiteClient:
             path=f"organizations/{org_slug}/emojis",
         )
 
-    """ User API
+    # User API
+    # https://buildkite.com/docs/apis/rest-api/user
 
-    The User API endpoint allows you to inspect details about the user account
-    that owns the API token that is currently being used.
-    """
+    # The User API endpoint allows you to inspect details about the user account
+    # that owns the API token that is currently being used.
 
     def get_current_user(self) -> requests.Response:
         """Returns basic details about the user account that sent the request."""
         return self.__request(
             method="GET",
-            path=f"user",
+            path="user",
         )
 
-    """ Meta API
+    # Meta API
+    # https://buildkite.com/docs/apis/rest-api/meta
 
-    The Meta API provides information about Buildkite, including a list of
-    Buildkite's IP addresses.
+    # The Meta API provides information about Buildkite, including a list of
+    # Buildkite's IP addresses.
 
-    It does not require authentication.
-    """
+    # It does not require authentication.
 
     def get_meta_information(self) -> requests.Response:
         """Returns an object with properties describing Buildkite.
@@ -1317,24 +1310,9 @@ class BuildkiteClient:
         """
         return self.__request(
             method="GET",
-            path=f"meta",
+            path="meta",
         )
 
 
-# Example for using the API.
-
-# Fetch the Buildkite API Token from the env variable "BUILDKITE_TOKEN"
-buildkite_token = os.environ["BUILDKITE_TOKEN"]
-
-# Create the Buildkite Client object
-buildkite_client = BuildkiteClient(buildkite_token)
-
-# Fetch the slug of the first organization for the specified API token.
-org_slug = buildkite_client.list_organizations().json()[0]["slug"]
-
-# Fetch the pipelines
-org_pipelines = buildkite_client.list_pipelines(org_slug).json()
-
-# Print the name of all pipelines for this organization.
-for pipeline in org_pipelines:
-    print(pipeline["name"])
+if __name__ == "__main__":
+    print("Please import the module to interface with the classes and functions.")
